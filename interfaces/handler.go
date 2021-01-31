@@ -86,8 +86,9 @@ type Handler struct {
 //Routes returns the initialized router
 func (h Handler) Routes() *router.Router {
 	r := router.NewRouter()
-	r.Get("/containers", h.getAllContainers)
-	r.Get("/container/:id", h.getContainer)
+	r.Get("/containers", h.getRunningContainers)
+	r.Get("/containers/all", h.getAllContainers)
+	r.Get("/container/:nameOrId", h.getContainer)
 	return r
 }
 
@@ -97,36 +98,51 @@ func (h Handler) RunServer(port int) error {
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), h.Routes())
 }
 
-func (h Handler) getContainer(w http.ResponseWriter, r *http.Request, id int) {
+func (h Handler) getContainer(w http.ResponseWriter, r *http.Request, nameOrId string) {
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
 		Service: h.Service,
 	}
 
-	container, err := interactor.Get(ctx, id)
+	container, err := interactor.Get(ctx, nameOrId)
 	if err != nil {
-		Error(w, http.StatusNotFound, err, "Failed to get container")
+		Error(w, http.StatusNotFound, err, err.Error())
 		return
 	}
 
 	Ok(w, http.StatusOK, container)
 }
 
+func (h Handler) getRunningContainers(w http.ResponseWriter, r *http.Request) {
+	h.getContainers(&w, r, false)
+}
+
 func (h Handler) getAllContainers(w http.ResponseWriter, r *http.Request) {
+	h.getContainers(&w, r, true)
+}
+
+func (h Handler) getContainers(w *http.ResponseWriter, r *http.Request, all bool) {
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
 		Service: h.Service,
 	}
+	var containers *[]domain.Container
+	var err error
+	if all {
+		containers, err = interactor.GetAll(ctx)
 
-	containers, err := interactor.GetAll(ctx)
+	} else {
+		containers, err = interactor.GetRunning(ctx)
+	}
+
 	if err != nil {
-		Error(w, http.StatusNotFound, err, "Failed to get containers list")
+		Error(*w, http.StatusNotFound, err, err.Error())
 		return
 	}
 	type payload struct {
-		Containers []*domain.Container `json:"containers"`
+		Containers *[]domain.Container `json:"containers"`
 	}
-	Ok(w, http.StatusOK, payload{Containers: containers})
+	Ok(*w, http.StatusOK, payload{Containers: containers})
 }

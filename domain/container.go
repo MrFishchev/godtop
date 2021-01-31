@@ -1,6 +1,9 @@
 package domain
 
 type Container struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID          string   `json:"id"`
+	Names       []string `json:"names"`
+	State       string   `json:"state"`
+	Status      string   `json:"status"`
+	PublicPorts []uint16 `json:"publicPorts"`
 }

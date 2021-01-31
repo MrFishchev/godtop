@@ -7,6 +7,6 @@ import "context"
 // DockerService represents access to docker engine API
 // Expect implementation by the infrastructure layer
 type DockerService interface {
-	GetContainer(ctx context.Context, id int) (*Container, error)
-	GetAllContainers(ctx context.Context) ([]*Container, error)
+	GetContainer(ctx context.Context, idOrName string) (*Container, error)
+	GetContainers(ctx context.Context, all bool) (*[]Container, error)
 }

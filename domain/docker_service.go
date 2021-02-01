@@ -9,5 +9,6 @@ import "context"
 type DockerService interface {
 	GetContainer(ctx context.Context, idOrName string) (*Container, error)
 	GetContainers(ctx context.Context, all bool) (*[]Container, error)
+	GetContainerStats(ctx context.Context, containerId string, stream bool) (*ContainerStats, error)
 	GetVolumes(ctx context.Context) (*[]Volume, error)
 }

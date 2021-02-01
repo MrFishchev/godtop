@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	router "github.com/takashabe/go-router"
+	"github.com/julienschmidt/httprouter"
 )
 
 func logDebug(format string, args ...interface{}) {
@@ -84,12 +84,13 @@ type Handler struct {
 }
 
 //Routes returns the initialized router
-func (h Handler) Routes() *router.Router {
-	r := router.NewRouter()
-	r.Get("/containers", h.getRunningContainers)
-	r.Get("/containers/all", h.getAllContainers)
-	r.Get("/container/:nameOrId", h.getContainer)
-	r.Get("/volumes", h.getVolumes)
+func (h Handler) Routes() *httprouter.Router {
+	r := httprouter.New()
+	r.GET("/containers", h.getRunningContainers)
+	r.GET("/containers/all", h.getAllContainers)
+	r.GET("/container/:nameOrId", h.getContainer)
+	r.GET("/container/:nameOrId/stats", h.getContainerStats)
+	r.GET("/volumes", h.getVolumes)
 	return r
 }
 
@@ -99,7 +100,8 @@ func (h Handler) RunServer(port int) error {
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), h.Routes())
 }
 
-func (h Handler) getContainer(w http.ResponseWriter, r *http.Request, nameOrId string) {
+func (h Handler) getContainer(w http.ResponseWriter, r *http.Request, args httprouter.Params) {
+	nameOrId := args.ByName("nameOrId")
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
@@ -115,15 +117,16 @@ func (h Handler) getContainer(w http.ResponseWriter, r *http.Request, nameOrId s
 	Ok(w, http.StatusOK, container)
 }
 
-func (h Handler) getRunningContainers(w http.ResponseWriter, r *http.Request) {
+func (h Handler) getRunningContainers(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	h.getContainers(&w, r, false)
 }
 
-func (h Handler) getAllContainers(w http.ResponseWriter, r *http.Request) {
+func (h Handler) getAllContainers(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	h.getContainers(&w, r, true)
 }
 
 func (h Handler) getContainers(w *http.ResponseWriter, r *http.Request, all bool) {
+
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
@@ -148,7 +151,28 @@ func (h Handler) getContainers(w *http.ResponseWriter, r *http.Request, all bool
 	Ok(*w, http.StatusOK, payload{Containers: containers})
 }
 
-func (h Handler) getVolumes(w http.ResponseWriter, r *http.Request) {
+func (h Handler) getContainerStats(w http.ResponseWriter, r *http.Request, args httprouter.Params) {
+	nameOrId := args.ByName("nameOrId")
+	ctx := r.Context()
+
+	interactor := application.ContainerInteractor{
+		Service: h.Service,
+	}
+
+	stats, err := interactor.GetStats(ctx, nameOrId, false)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, err.Error())
+		return
+	}
+
+	type payload struct {
+		Stats *domain.ContainerStats `json:"stats"`
+	}
+
+	Ok(w, http.StatusOK, payload{Stats: stats})
+}
+
+func (h Handler) getVolumes(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx := r.Context()
 
 	interactor := application.VolumeInteractor{

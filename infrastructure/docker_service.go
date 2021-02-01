@@ -1,13 +1,16 @@
 package infrastructure
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"godtop/domain"
+	"io"
 	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/tidwall/gjson"
 )
 
 type dockerEngine struct {
@@ -66,7 +69,33 @@ func (d dockerEngine) GetContainer(ctx context.Context, idOrName string) (*domai
 		}
 	}
 
-	return nil, errors.New("Cannot find a container")
+	return nil, errors.New("cannot find a container")
+}
+
+func (d dockerEngine) GetContainerStats(ctx context.Context, containerId string, stream bool) (*domain.ContainerStats, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := cli.ContainerStatsOneShot(ctx, containerId)
+	if err != nil {
+		return nil, err
+	}
+
+	var buff bytes.Buffer
+	_, err = io.Copy(&buff, response.Body)
+	if err != nil {
+		return nil, err
+	}
+	jsonBytes := buff.Bytes()
+
+	result := domain.ContainerStats{}
+	result.RxBytes, result.TxBytes = getNetworkStats(&jsonBytes)
+	result.UsedMemory, result.MemoryUsage = getMemoryStats(&jsonBytes)
+	result.CpuUsage = getCpuStats(&jsonBytes)
+
+	return &result, nil
 }
 
 func (d dockerEngine) GetVolumes(ctx context.Context) (*[]domain.Volume, error) {
@@ -121,6 +150,67 @@ func getPublicPorts(ports []types.Port) []uint16 {
 	}
 
 	return result
+}
+
+func getNetworkStats(jsonBytes *[]byte) (rx int64, tx int64) {
+	eth0 := gjson.GetBytes(*jsonBytes, "networks.eth0")
+	if eth0.Type.String() != "Null" {
+		rx = eth0.Get("rx_bytes").Int()
+		tx = eth0.Get("tx_bytes").Int()
+	}
+
+	return rx, tx
+}
+
+func getMemoryStats(jsonBytes *[]byte) (usedMemory int64, memoryUsage float32) {
+	//used_memory = memory_stats.usage - memory_stats.stats.cache
+	//available_memory = memory_stats.limit
+	//memory_usage% = (used_memory / available_memory) * 100.0
+	memory := gjson.GetBytes(*jsonBytes, "memory_stats")
+	if memory.Type.String() != "Null" {
+		usage := memory.Get("usage")
+		cache := memory.Get("stats.cache")
+		if usage.Type.String() != "Null" && cache.Type.String() != "Null" {
+			usedMemory = usage.Int() - cache.Int()
+		}
+
+		available := memory.Get("limit")
+		if available.Type.String() != "Null" {
+			memoryUsage = (float32(usedMemory) / float32(available.Int())) * 100.0
+		}
+	}
+
+	return usedMemory, memoryUsage
+}
+
+func getCpuStats(jsonBytes *[]byte) float32 {
+	//cpu_delta = cpu_stats.cpu_usage.total_usage - precpu_stats.cpu_usage.total_usage
+	//system_cpu_delta = cpu_stats.system_cpu_usage - precpu_stats.system_cpu_usage
+	//number_cpus = cpu_stats.online_cpus (if older lenght(cpu_stats.cpu_usage.percpu_usage))
+	//cpu_usage% = (cpu_delta / system_cpu_delta) * number_cpus * 100.0
+	cpu := gjson.GetBytes(*jsonBytes, "cpu_stats")
+	precpu := gjson.GetBytes(*jsonBytes, "precpu_stats")
+	if cpu.Type.String() == "Null" || precpu.Type.String() == "Null" {
+		return 0
+	}
+
+	totalUsage := cpu.Get("cpu_usage.total_usage")
+	preTotalUsage := precpu.Get("cpu_usage.total_usage")
+	if totalUsage.Type.String() == "Null" {
+		return 0
+	}
+
+	cpuDelta := totalUsage.Int() - preTotalUsage.Int()
+	systemUsage := cpu.Get("system_cpu_usage")
+	preSystemUsage := precpu.Get("system_cpu_usage")
+	if systemUsage.Type.String() == "Null" {
+		return 0
+	}
+
+	systemCpuDelta := systemUsage.Int() - preSystemUsage.Int()
+	number_cpus := cpu.Get("online_cpus")
+
+	return float32(cpuDelta/systemCpuDelta) * float32(number_cpus.Int()) * 100.0
 }
 
 //endregion

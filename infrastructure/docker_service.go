@@ -69,6 +69,34 @@ func (d dockerEngine) GetContainer(ctx context.Context, idOrName string) (*domai
 	return nil, errors.New("Cannot find a container")
 }
 
+func (d dockerEngine) GetVolumes(ctx context.Context) (*[]domain.Volume, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, err
+	}
+
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var volumes []domain.Volume
+	for _, container := range containers {
+		for _, mount := range container.Mounts {
+			if mount.Type == "bind" || mount.Type == "volume" {
+				volume := domain.Volume{
+					Source:      mount.Source,
+					Destination: mount.Destination,
+					Size:        GetDirectorySize(mount.Source),
+				}
+				volumes = append(volumes, volume)
+			}
+		}
+	}
+
+	return &volumes, nil
+}
+
 //region Private Methods
 
 func getTrimmedNames(names []string) []string {

@@ -89,6 +89,7 @@ func (h Handler) Routes() *router.Router {
 	r.Get("/containers", h.getRunningContainers)
 	r.Get("/containers/all", h.getAllContainers)
 	r.Get("/container/:nameOrId", h.getContainer)
+	r.Get("/volumes", h.getVolumes)
 	return r
 }
 
@@ -145,4 +146,24 @@ func (h Handler) getContainers(w *http.ResponseWriter, r *http.Request, all bool
 		Containers *[]domain.Container `json:"containers"`
 	}
 	Ok(*w, http.StatusOK, payload{Containers: containers})
+}
+
+func (h Handler) getVolumes(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	interactor := application.VolumeInteractor{
+		Service: h.Service,
+	}
+
+	volumes, err := interactor.GetAll(ctx)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, err.Error())
+		return
+	}
+
+	type payload struct {
+		Volumes *[]domain.Volume `json:"volumes"`
+	}
+
+	Ok(w, http.StatusOK, payload{Volumes: volumes})
 }

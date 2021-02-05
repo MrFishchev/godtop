@@ -1,0 +1,138 @@
+basePath: /api
+definitions:
+  domain.Container:
+    properties:
+      id:
+        type: string
+      names:
+        items:
+          type: string
+        type: array
+      publicPorts:
+        items:
+          type: integer
+        type: array
+      state:
+        type: string
+      status:
+        type: string
+    type: object
+  domain.ContainerStats:
+    properties:
+      cpuUsage:
+        type: number
+      memoryUsage:
+        type: number
+      rxBytes:
+        type: integer
+      txBytes:
+        type: integer
+      usedMemory:
+        type: integer
+    type: object
+  domain.HostInfo:
+    properties:
+      cpuUsage:
+        type: number
+      totalMemory:
+        type: integer
+      totalStorage:
+        type: integer
+      totalSwapMemory:
+        type: integer
+      usedMemory:
+        type: integer
+      usedStorage:
+        type: integer
+      usedSwapMemory:
+        type: integer
+    type: object
+  domain.Volume:
+    properties:
+      destination:
+        type: string
+      name:
+        type: string
+      size:
+        type: integer
+      source:
+        type: string
+    type: object
+info:
+  contact:
+    email: mrfishchev@seniorvlogger.com
+    name: Aleksey Fishchev
+  description: Docker graphical activity monitor
+  license:
+    name: MIT
+    url: https://github.com/MrFishchev/godtop/blob/main/LICENSE
+  title: Godtop
+  version: "1.0"
+paths:
+  /container/{nameOrId}:
+    get:
+      parameters:
+      - description: container Name or Id
+        in: path
+        name: nameOrId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Container'
+      summary: Retrieves container information by its Id or Name
+  /container/{nameOrId}/stats:
+    get:
+      parameters:
+      - description: container Name or Id
+        in: path
+        name: nameOrId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ContainerStats'
+      summary: Retrieves statistics of a container
+  /containers:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Container'
+            type: array
+      summary: Retrieves running containers
+  /host:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.HostInfo'
+      summary: Retrieves information about host stystem
+  /volumes:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Volume'
+            type: array
+      summary: Retrieves mounted and created volumes
+swagger: "2.0"

@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/containerd/containerd v1.4.3 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v20.10.2+incompatible
@@ -26,6 +27,8 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.1
 	github.com/sirupsen/logrus v1.7.0 // indirect
+	github.com/swaggo/gin-swagger v1.3.0
+	github.com/swaggo/swag v1.5.1
 	github.com/tidwall/gjson v1.6.8
 	github.com/ugorji/go v1.2.4 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect

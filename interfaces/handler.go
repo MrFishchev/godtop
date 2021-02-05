@@ -8,7 +8,11 @@ import (
 	"net/http"
 	"os"
 
+	_ "godtop/docs"
+
 	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 func logDebug(format string, args ...interface{}) {
@@ -35,7 +39,7 @@ func Error(ctx *gin.Context, code int, err error, msg string) {
 	}
 
 	logDebug("%s", e.ToString())
-	ctx.JSON(code, e)
+	ctx.AbortWithStatusJSON(code, e)
 }
 
 func Ok(ctx *gin.Context, src ...interface{}) {
@@ -49,33 +53,38 @@ type Handler struct {
 }
 
 //Routes returns the initialized router
-func (h Handler) Routes() *gin.Engine {
+func (h Handler) routes(port string) *gin.Engine {
 	r := gin.Default()
-	r.GET("/containers", h.getRunningContainers)
-	r.GET("/containers/all", h.getAllContainers)
-	r.GET("/container/:nameOrId", h.getContainer)
-	r.GET("/container/:nameOrId/stats", h.getContainerStats)
-	r.GET("/volumes", h.getVolumes)
-	r.GET("/host", h.getHostInfo)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	api := r.Group("/api")
+	{
+		api.GET("/containers", h.getRunningContainers)
+		api.GET("/containers/all", h.getAllContainers)
+		api.GET("/container/:nameOrId", h.getContainer)
+		api.GET("/container/:nameOrId/stats", h.getContainerStats)
+		api.GET("/volumes", h.getVolumes)
+		api.GET("/host", h.getHostInfo)
+	}
+
 	return r
 }
 
 //RunServer starts server on a specific port
 func (h Handler) RunServer(port int) error {
 	log.Printf("Server running at http://localhost:%d/", port)
-	return h.Routes().Run(fmt.Sprintf(":%d", port))
+	portStr := fmt.Sprintf(":%d", port)
+	return h.routes(portStr).Run(portStr)
 }
 
-func (h Handler) getHostInfo(ctx *gin.Context) {
-	interactor := application.HostInteractor{
-		Service: h.HostService,
-	}
+//region API Handlers
 
-	info := interactor.GetInfo(ctx)
-
-	Ok(ctx, info)
-}
-
+// getContainer godoc
+// @Summary Retrieves container information by its Id or Name
+// @Produce json
+// @Param nameOrId path string true "container Name or Id"
+// @Success 200 {object} domain.Container
+// @Router /container/{nameOrId} [get]
 func (h Handler) getContainer(ctx *gin.Context) {
 	nameOrId := ctx.Param("nameOrId")
 
@@ -92,10 +101,19 @@ func (h Handler) getContainer(ctx *gin.Context) {
 	Ok(ctx, container)
 }
 
+// getRunningContainers godoc
+// @Summary Retrieves running containers
+// @Produce json
+// @Success 200 {array} domain.Container
+// @Router /containers [get]
 func (h Handler) getRunningContainers(ctx *gin.Context) {
 	h.getContainers(ctx, false)
 }
 
+// getAllContainers godoc
+// @Summary Retrieves all containers
+// @Produce json
+// @Success 200 {array} domain.Container
 func (h Handler) getAllContainers(ctx *gin.Context) {
 	h.getContainers(ctx, true)
 }
@@ -123,6 +141,12 @@ func (h Handler) getContainers(ctx *gin.Context, all bool) {
 	Ok(ctx, payload{Containers: containers})
 }
 
+// getContainerStats godoc
+// @Summary Retrieves statistics of a container
+// @Produce json
+// @Param nameOrId path string true "container Name or Id"
+// @Success 200 {object} domain.ContainerStats
+// @Router /container/{nameOrId}/stats [get]
 func (h Handler) getContainerStats(ctx *gin.Context) {
 	nameOrId := ctx.Param("nameOrId")
 
@@ -143,6 +167,11 @@ func (h Handler) getContainerStats(ctx *gin.Context) {
 	Ok(ctx, payload{Stats: stats})
 }
 
+// getVolumes godoc
+// @Summary Retrieves mounted and created volumes
+// @Produce json
+// @Success 200 {array} domain.Volume
+// @Router /volumes [get]
 func (h Handler) getVolumes(ctx *gin.Context) {
 	interactor := application.VolumeInteractor{
 		Service: h.DockerService,
@@ -160,3 +189,20 @@ func (h Handler) getVolumes(ctx *gin.Context) {
 
 	Ok(ctx, payload{Volumes: volumes})
 }
+
+// getHostInfo godoc
+// @Summary Retrieves information about host stystem
+// @Produce json
+// @Success 200 {object} domain.HostInfo
+// @Router /host [get]
+func (h Handler) getHostInfo(ctx *gin.Context) {
+	interactor := application.HostInteractor{
+		Service: h.HostService,
+	}
+
+	info := interactor.GetInfo(ctx)
+
+	Ok(ctx, info)
+}
+
+//endregion

@@ -1,0 +1,214 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Docker graphical activity monitor",
+        "title": "Godtop",
+        "contact": {
+            "name": "Aleksey Fishchev",
+            "email": "mrfishchev@seniorvlogger.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://github.com/MrFishchev/godtop/blob/main/LICENSE"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/api",
+    "paths": {
+        "/container/{nameOrId}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Retrieves container information by its Id or Name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "container Name or Id",
+                        "name": "nameOrId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Container"
+                        }
+                    }
+                }
+            }
+        },
+        "/container/{nameOrId}/stats": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Retrieves statistics of a container",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "container Name or Id",
+                        "name": "nameOrId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ContainerStats"
+                        }
+                    }
+                }
+            }
+        },
+        "/containers": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Retrieves running containers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Container"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/host": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Retrieves information about host stystem",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.HostInfo"
+                        }
+                    }
+                }
+            }
+        },
+        "/volumes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Retrieves mounted and created volumes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.Volume"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.Container": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "publicPorts": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "state": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ContainerStats": {
+            "type": "object",
+            "properties": {
+                "cpuUsage": {
+                    "type": "number"
+                },
+                "memoryUsage": {
+                    "type": "number"
+                },
+                "rxBytes": {
+                    "type": "integer"
+                },
+                "txBytes": {
+                    "type": "integer"
+                },
+                "usedMemory": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.HostInfo": {
+            "type": "object",
+            "properties": {
+                "cpuUsage": {
+                    "type": "number"
+                },
+                "totalMemory": {
+                    "type": "integer"
+                },
+                "totalStorage": {
+                    "type": "integer"
+                },
+                "totalSwapMemory": {
+                    "type": "integer"
+                },
+                "usedMemory": {
+                    "type": "integer"
+                },
+                "usedStorage": {
+                    "type": "integer"
+                },
+                "usedSwapMemory": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Volume": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

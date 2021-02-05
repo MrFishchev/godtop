@@ -16,7 +16,7 @@ import (
 type dockerEngine struct {
 }
 
-func Create() *dockerEngine {
+func CreateDockerService() *dockerEngine {
 	return &dockerEngine{}
 }
 

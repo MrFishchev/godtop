@@ -8,7 +8,8 @@ import (
 
 func main() {
 	handler := interfaces.Handler{
-		Service: infrastructure.Create(),
+		DockerService: infrastructure.CreateDockerService(),
+		HostService:   infrastructure.CreateHostService(),
 	}
 
 	if err := handler.RunServer(8080); err != nil {

@@ -80,7 +80,8 @@ func Respond(w http.ResponseWriter, code int, src interface{}) {
 
 //Handler docker service
 type Handler struct {
-	Service domain.DockerService
+	DockerService domain.DockerService
+	HostService   domain.HostService
 }
 
 //Routes returns the initialized router
@@ -91,6 +92,7 @@ func (h Handler) Routes() *httprouter.Router {
 	r.GET("/container/:nameOrId", h.getContainer)
 	r.GET("/container/:nameOrId/stats", h.getContainerStats)
 	r.GET("/volumes", h.getVolumes)
+	r.GET("/host", h.getHostInfo)
 	return r
 }
 
@@ -100,12 +102,24 @@ func (h Handler) RunServer(port int) error {
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), h.Routes())
 }
 
+func (h Handler) getHostInfo(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ctx := r.Context()
+
+	interactor := application.HostInteractor{
+		Service: h.HostService,
+	}
+
+	info := interactor.GetInfo(ctx)
+
+	Ok(w, http.StatusOK, info)
+}
+
 func (h Handler) getContainer(w http.ResponseWriter, r *http.Request, args httprouter.Params) {
 	nameOrId := args.ByName("nameOrId")
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
-		Service: h.Service,
+		Service: h.DockerService,
 	}
 
 	container, err := interactor.Get(ctx, nameOrId)
@@ -130,7 +144,7 @@ func (h Handler) getContainers(w *http.ResponseWriter, r *http.Request, all bool
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
-		Service: h.Service,
+		Service: h.DockerService,
 	}
 	var containers *[]domain.Container
 	var err error
@@ -156,7 +170,7 @@ func (h Handler) getContainerStats(w http.ResponseWriter, r *http.Request, args 
 	ctx := r.Context()
 
 	interactor := application.ContainerInteractor{
-		Service: h.Service,
+		Service: h.DockerService,
 	}
 
 	stats, err := interactor.GetStats(ctx, nameOrId, false)
@@ -176,7 +190,7 @@ func (h Handler) getVolumes(w http.ResponseWriter, r *http.Request, _ httprouter
 	ctx := r.Context()
 
 	interactor := application.VolumeInteractor{
-		Service: h.Service,
+		Service: h.DockerService,
 	}
 
 	volumes, err := interactor.GetAll(ctx)

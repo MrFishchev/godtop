@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"godtop/domain"
+	"godtop/domain/utils"
 	"io"
 	"strings"
 
@@ -116,7 +117,7 @@ func (d dockerEngine) GetVolumes(ctx context.Context) (*[]domain.Volume, error) 
 				volume := domain.Volume{
 					Source:      mount.Source,
 					Destination: mount.Destination,
-					Size:        GetDirectorySize(mount.Source),
+					Size:        utils.GetDirectorySize(mount.Source),
 				}
 				volumes = append(volumes, volume)
 			}

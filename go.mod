@@ -11,6 +11,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gin-gonic/gin v1.6.3
+	github.com/gizak/termui/v3 v3.1.0
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/shirou/gopsutil/v3 v3.21.1
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/swaggo/gin-swagger v1.3.0

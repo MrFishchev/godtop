@@ -1,9 +1,8 @@
 package main
 
 import (
-	"godtop/infrastructure"
-	"godtop/interfaces"
-	"log"
+	"fmt"
+	"godtop/consoleui"
 )
 
 // @title Godtop
@@ -18,12 +17,17 @@ import (
 
 // @BasePath /api
 func main() {
-	handler := interfaces.Handler{
-		DockerService: infrastructure.CreateDockerService(),
-		HostService:   infrastructure.CreateHostService(),
-	}
+	// handler := interfaces.Handler{
+	// 	DockerService: infrastructure.CreateDockerService(),
+	// 	HostService:   infrastructure.CreateHostService(),
+	// }
 
-	if err := handler.RunServer(8080); err != nil {
-		log.Fatal(err)
+	// if err := handler.RunServer(8080); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	err := consoleui.Run()
+	if err != nil {
+		fmt.Printf("Cannot run consoleui: %v", err.Error())
 	}
 }

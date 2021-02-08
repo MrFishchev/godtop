@@ -105,6 +105,11 @@ func (w *VolumesWidget) sortVolumesBySize() {
 	sort.Slice(sortedVolumes, func(i, j int) bool {
 		return sortedVolumes[i].Value.Size > sortedVolumes[j].Value.Size
 	})
+
+	w.Volumes = make(map[string]*domain.Volume, len(sortedVolumes))
+	for _, volume := range sortedVolumes {
+		w.Volumes[volume.Key] = volume.Value
+	}
 }
 
 func (w *VolumesWidget) addAppearedVolumes(volumes *[]domain.Volume) {

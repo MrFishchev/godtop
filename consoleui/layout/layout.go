@@ -24,7 +24,7 @@ type Grid struct {
 	Volumes *widgets.VolumesWidget
 }
 
-var widgetNames []string = []string{"volumes"}
+var widgetNames []string = []string{"volumes", "network"}
 
 func Generate(c config.Config) (*Grid, error) {
 	wl := createLayout()
@@ -57,14 +57,21 @@ func Generate(c config.Config) (*Grid, error) {
 func createLayout() layout {
 	result := layout{Rows: make([][]widgetRule, 0)}
 
-	rule := widgetRule{
+	// rule := widgetRule{
+	// 	Weight: 1,
+	// 	Height: 1,
+	// 	Widget: "volumes",
+	// }
+
+	rule1 := widgetRule{
 		Weight: 1,
 		Height: 1,
-		Widget: "volumes",
+		Widget: "network",
 	}
 
 	row := make([]widgetRule, 0)
-	row = append(row, rule)
+	// row = append(row, rule)
+	row = append(row, rule1)
 
 	result.Rows = append(result.Rows, row)
 	return result
@@ -197,8 +204,9 @@ func countMaxHeight(rs [][]widgetRule) int {
 func makeWidget(c config.Config, widRule widgetRule) interface{} {
 	switch widRule.Widget {
 	case "volumes":
-		dw := widgets.NewVolumesWidget()
-		return dw
+		return widgets.NewVolumesWidget()
+	case "network":
+		return widgets.NewNetworkWidget()
 	default:
 		log.Printf("The widget %v doesn't exist (%v).", widRule.Widget, strings.Join(widgetNames, ","))
 		return ui.NewBlock()

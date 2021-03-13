@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -71,61 +72,58 @@ func ParseLayout(reader io.Reader) layout {
 		for _, widgetParam := range lineWidgets {
 			wRule := widgetRule{Weight: 1}
 
-			// get widget's weight, rowspan and name
-			var widget string
 			splitRules := strings.Split(widgetParam, "/")
 			splitRowspan := strings.Split(splitRules[0], ":")
-			// validate rowspan and widget name part
-			if len(splitRowspan) > 1 {
-				wRowspan, err := strconv.Atoi(splitRowspan[0])
-				if err != nil {
-					log.Printf("layout.error.format (INT:)?STRING: %v (%v)", splitRowspan[0], widgetParam)
-					wRowspan = 1
-				}
-				if wRowspan < 1 {
-					wRowspan = 1
-				}
-				wRule.Height = wRowspan
-				widget = splitRowspan[1]
-			} else {
-				wRule.Height = 1
-				widget = splitRowspan[0]
-			}
-			wRule.Widget = strings.ToLower(widget)
 
-			// validate widget's weight
-			if len(splitRules) > 1 {
-				wWeight, err := strconv.Atoi(splitRules[1])
-				if err != nil {
-					log.Printf("layout.error.format STRING(/INT)?: %v (%v)", splitRules[1], widgetParam)
-					wWeight = 1
-				}
-				if wWeight < 1 {
-					wWeight = 1
-				}
-				wRule.Weight = float64(wWeight)
-				if len(splitRules) > 2 {
-					log.Printf("layout.error.slashes: %v", widgetParam)
-				}
-				weightTotal += wWeight
-			} else {
-				weightTotal++
-			}
+			wRule.Height, wRule.Widget = getHeighAndWidgetName(splitRowspan, widgetParam)
+			wRule.Weight = getWeightAndTotalWeight(splitRules, &weightTotal, widgetParam)
 
 			layoutRow = append(layoutRow, wRule)
 		}
 
-		// prevent tricksy users from breaking their own computers
-		if weightTotal < 1 {
-			weightTotal = 1
-		}
-
 		// calculate weight of each row
 		for i, w := range layoutRow {
-			layoutRow[i].Weight = w.Weight / float64(weightTotal)
+			layoutRow[i].Weight = w.Weight / math.Max(float64(weightTotal), 1)
 		}
 
 		layout.Rows = append(layout.Rows, layoutRow)
 	}
 	return layout
+}
+
+func getHeighAndWidgetName(splitRowspan []string, widgetParam string) (int, string) {
+	if len(splitRowspan) > 1 {
+		wRowspan, err := strconv.Atoi(splitRowspan[0])
+		if err != nil {
+			log.Printf("layout.error.format (INT:)?STRING: %v (%v)", splitRowspan[0], widgetParam)
+			wRowspan = 1
+		}
+		if wRowspan < 1 {
+			wRowspan = 1
+		}
+		return wRowspan, splitRowspan[1]
+	} else {
+		return 1, splitRowspan[0]
+	}
+}
+
+func getWeightAndTotalWeight(splitRules []string, weightTotal *int, widgetParam string) float64 {
+	var height int
+
+	if len(splitRules) > 1 {
+		wWeight, err := strconv.Atoi(splitRules[1])
+		if err != nil {
+			log.Printf("layout.error.format STRING(/INT)?: %v (%v)", splitRules[1], widgetParam)
+			wWeight = 1
+		}
+		height = wWeight
+		if len(splitRules) > 2 {
+			log.Printf("layout.error.slashes: %v", widgetParam)
+		}
+		*weightTotal += wWeight
+	} else {
+		*weightTotal++
+	}
+
+	return math.Max(float64(height), 1)
 }

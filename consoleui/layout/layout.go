@@ -26,8 +26,7 @@ type Grid struct {
 
 var widgetNames []string = []string{"volumes", "network"}
 
-func Generate(c config.Config) (*Grid, error) {
-	wl := createLayout()
+func GenerateGrid(wl layout, c config.Config) (*Grid, error) {
 	rowDefs := wl.Rows
 	uiRows := make([][]interface{}, 0)
 	numRows := countNumRows(wl.Rows)
@@ -52,29 +51,6 @@ func Generate(c config.Config) (*Grid, error) {
 	grid.Set(rgs...)
 
 	return grid, nil
-}
-
-func createLayout() layout {
-	result := layout{Rows: make([][]widgetRule, 0)}
-
-	// rule := widgetRule{
-	// 	Weight: 1,
-	// 	Height: 1,
-	// 	Widget: "volumes",
-	// }
-
-	rule1 := widgetRule{
-		Weight: 1,
-		Height: 1,
-		Widget: "network",
-	}
-
-	row := make([]widgetRule, 0)
-	// row = append(row, rule)
-	row = append(row, rule1)
-
-	result.Rows = append(result.Rows, row)
-	return result
 }
 
 func countNumRows(rs [][]widgetRule) int {

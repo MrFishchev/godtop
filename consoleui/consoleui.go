@@ -5,8 +5,11 @@ import (
 	"godtop/consoleui/config"
 	"godtop/consoleui/layout"
 	"godtop/consoleui/logging"
+	"io"
+	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,11 +30,19 @@ func Run() error {
 		return err
 	}
 
+	layoutStream, err := getLayout(config)
+	if err != nil {
+		log.Fatalf("Cannot parse layout: %v", err)
+		return err
+	}
+
+	layoutRaw := layout.ParseLayout(layoutStream)
+
 	defer ui.Close()
 
 	setDefaultUiColors(config)
 
-	grid, err := layout.Generate(config)
+	grid, err := layout.GenerateGrid(layoutRaw, config)
 	if err != nil {
 		return err
 	}
@@ -85,4 +96,9 @@ func setDefaultUiColors(config config.Config) {
 	ui.Theme.Default = ui.NewStyle(ui.Color(config.Colorscheme.MainFg), ui.Color(config.Colorscheme.MainBg))
 	ui.Theme.Block.Title = ui.NewStyle(ui.Color(config.Colorscheme.BorderFg), ui.Color(config.Colorscheme.MainBg))
 	ui.Theme.Block.Border = ui.NewStyle(ui.Color(config.Colorscheme.BorderFg), ui.Color(config.Colorscheme.MainBg))
+}
+
+func getLayout(config config.Config) (io.Reader, error) {
+	// TODO: parse config to get layout
+	return strings.NewReader("volumes network"), nil
 }

@@ -209,9 +209,10 @@ func getCpuStats(jsonBytes *[]byte) float32 {
 	}
 
 	systemCpuDelta := systemUsage.Int() - preSystemUsage.Int()
-	number_cpus := cpu.Get("online_cpus")
+	numberCpus := cpu.Get("online_cpus")
 
-	return float32(cpuDelta/systemCpuDelta) * float32(number_cpus.Int()) * 100.0
+	result := float64(cpuDelta) / float64(systemCpuDelta) * numberCpus.Float() * 100.0
+	return float32(result)
 }
 
 //endregion

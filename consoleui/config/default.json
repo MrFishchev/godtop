@@ -6,9 +6,10 @@
 	"BorderBg":  6,
 
 	"Containers": [4, 3, 2, 1, 5, 6, 7, 8],
+	"CpuLines": [4, 3, 2, 1, 5, 6, 7, 8],
 
 	"Cursor": 4,
 
 	"ValueLow":  2,
-	"ValueHight": 1
+	"ValueHigh": 1
 }

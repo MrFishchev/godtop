@@ -4,6 +4,7 @@ import (
 	"godtop/consoleui/config"
 	"godtop/consoleui/widgets"
 	"log"
+	"sort"
 	"strings"
 
 	ui "github.com/gizak/termui/v3"
@@ -24,7 +25,7 @@ type Grid struct {
 	Volumes *widgets.VolumesWidget
 }
 
-var widgetNames []string = []string{"volumes", "network"}
+var widgetNames []string = []string{"volumes", "network", "cpu"}
 
 func GenerateGrid(wl layout, c config.Config) (*Grid, error) {
 	rowDefs := wl.Rows
@@ -183,8 +184,30 @@ func makeWidget(c config.Config, widRule widgetRule) interface{} {
 		return widgets.NewVolumesWidget()
 	case "network":
 		return widgets.NewNetworkWidget()
+	case "cpu":
+		cpu := widgets.NewCpuWidget()
+		assignColors(cpu.Data, c.Colorscheme.CpuLines, cpu.LineColors)
+		return cpu
 	default:
 		log.Printf("The widget %v doesn't exist (%v).", widRule.Widget, strings.Join(widgetNames, ","))
 		return ui.NewBlock()
+	}
+}
+
+func assignColors(data map[string][]float64, colors []int, assign map[string]ui.Color) {
+	// Make sure the data is always processed in the same order so that
+	// colors are assigned to devices consistently
+	keys := make([]string, 0, len(data))
+	for key := range data {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	i := 0 // For looping around if we run out of colors
+	for _, v := range keys {
+		if i >= len(colors) {
+			i = 0
+		}
+		assign[v] = ui.Color(colors[i])
+		i++
 	}
 }

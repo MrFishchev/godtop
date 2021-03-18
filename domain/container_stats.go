@@ -6,4 +6,5 @@ type ContainerStats struct {
 	UsedMemory  int64
 	MemoryUsage float32
 	CpuUsage    float32
+	DisplayName string
 }

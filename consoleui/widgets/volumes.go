@@ -52,17 +52,20 @@ func NewVolumesWidget() *VolumesWidget {
 }
 
 func (w *VolumesWidget) update() {
-	ctx := context.Background()
-	volumes, err := w.DockerEngine.GetVolumes(ctx)
-	if err != nil {
-		log.Printf("unable to get volumes: %v", err.Error())
-		return
-	}
+	go func() {
 
-	w.addAppearedVolumes(volumes)
-	w.deleteDisappearedVolumes(volumes)
-	w.updateVolumes(volumes)
-	w.updateTable()
+		ctx := context.Background()
+		volumes, err := w.DockerEngine.GetVolumes(ctx)
+		if err != nil {
+			log.Printf("unable to get volumes: %v", err.Error())
+			return
+		}
+
+		w.addAppearedVolumes(volumes)
+		w.deleteDisappearedVolumes(volumes)
+		w.updateVolumes(volumes)
+		w.updateTable()
+	}()
 }
 
 // converts self.Volumes into self.Rows which is a [][]string

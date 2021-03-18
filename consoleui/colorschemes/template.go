@@ -15,5 +15,6 @@ type Colorscheme struct {
 	Containers []int
 	Cursor     int
 	ValueLow   int
-	ValueHight int
+	ValueHigh int
+	CpuLines   []int
 }

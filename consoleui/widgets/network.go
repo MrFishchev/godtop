@@ -26,7 +26,7 @@ func NewNetworkWidget() *NetworkWidget {
 	}
 
 	self.Title = "Network Usage"
-	self.Header = []string{"Container", "Rx/s", "Tx/s"}
+	self.Header = []string{"Container", "Tx/s", "Rx/s"}
 	self.ColGap = 2
 	self.ColResizer = func() {
 		self.ColWidths = []int{
@@ -51,25 +51,29 @@ func NewNetworkWidget() *NetworkWidget {
 }
 
 func (w *NetworkWidget) update() {
-	ctx := context.Background()
 
-	containers, err := w.DockerEngine.GetContainers(ctx, false)
-	if err != nil {
-		log.Printf("unable to get containers: %v", err.Error())
-		return
-	}
+	go func() {
 
-	for _, container := range *containers {
-		stats, err := w.getContainerStats(ctx, container.ID)
+		ctx := context.Background()
+
+		containers, err := w.DockerEngine.GetContainers(ctx, false)
 		if err != nil {
-			log.Printf("unable to get container's stats")
-			continue
+			log.Printf("unable to get containers: %v", err.Error())
+			return
 		}
 
-		w.Containers[container.ID] = stats
-	}
+		for _, container := range *containers {
+			stats, err := w.getContainerStats(ctx, container.ID)
+			if err != nil {
+				log.Printf("unable to get container's stats")
+				continue
+			}
 
-	w.updateTable(containers)
+			w.Containers[container.ID] = stats
+		}
+
+		w.updateTable(containers)
+	}()
 }
 
 func (w *NetworkWidget) updateTable(containers *[]domain.Container) {
@@ -79,8 +83,8 @@ func (w *NetworkWidget) updateTable(containers *[]domain.Container) {
 	for id, stats := range w.Containers {
 		w.Rows[i] = make([]string, 3)
 		w.Rows[i][0] = utils.GetContainerNameOrId(id, containers)
-		w.Rows[i][1] = fmt.Sprintf("%v MB", stats.RxBytes/1024/1024)
-		w.Rows[i][2] = fmt.Sprintf("%v MB", stats.TxBytes/1024/1024)
+		w.Rows[i][1] = fmt.Sprintf("%v B", stats.TxBytes)
+		w.Rows[i][2] = fmt.Sprintf("%v B", stats.RxBytes)
 		i++
 	}
 }

@@ -100,5 +100,5 @@ func setDefaultUiColors(config config.Config) {
 
 func getLayout(config config.Config) (io.Reader, error) {
 	// TODO: parse config to get layout
-	return strings.NewReader("volumes network"), nil
+	return strings.NewReader("cpu\nvolumes network\n"), nil
 }
